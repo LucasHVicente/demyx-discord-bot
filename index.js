@@ -1,6 +1,22 @@
 const Discord = require('discord.js');
 const ytdl = require('ytdl-core');
-
+const demyxQuotes = 
+  {
+    musicPlayQuotes : [
+      "Dance, water! Dance! ",
+      "Come on, keep to the beat! ",
+      "Pipe down and listen! ",
+      "Demyx time!"
+    ],
+    musicStopQuotes : [
+      "I could reeealy use a break. ",
+      "Yeah? Well, no biggie!I'll just find a comfy spot and kick back for a while. ",
+      "Hey, even us Nobodies need our rest, right? "
+    ],
+    welcomeQuotes : [
+      "So, uh... you play any instruments?No?...Never mind. "
+    ]
+  }
 const bot = new Discord.Client();
 const {
 	prefix,
@@ -14,32 +30,44 @@ bot.once('ready',() =>{
 });
 
 bot.on('guildMemberAdd', membro=>{
-  membro.send(`Seja bem vindo! Siga as regras do servidor e divirta-se`);
+  const quote = demyxQuotes.musicPlayQuotes[Math.floor(Math.random() * demyxQuotes.welcomeQuotes.length)]
+  membro.send(quote);
 })
 
+
 bot.on('message',async msg=>{//comandos de mensagens
-  if(msg.content === prefix+'oi'){
-    msg.reply('Hello there!');
+
+  if(msg.author.bot) return;
+  if(!msg.content.startsWith(prefix)) return;
+  const voiceChannel = msg.member.voice.channel;
+  const args = msg.content.substring(prefix.length).split(" ");
+
+  if(msg.content.startsWith(`${prefix}play`)){
+    if (msg.member.voice.channel) {
+      const connection = await voiceChannel.join();
+      const quote = demyxQuotes.musicPlayQuotes[Math.floor(Math.random() * demyxQuotes.musicPlayQuotes.length)]
+      msg.channel.send(quote + args[1]);
+      const dispatcher = connection.play(ytdl(args[1]))
+      .on('finish', ()=>voiceChannel.leave())
+      .on('error', err=>{
+        console.log(err);
+      })
+      dispatcher.setVolumeLogarithmic(5 / 5);
+    } else {
+      msg.reply('Voce precisa entrar em um canal de voz antes!');
+    }
+  }else {
+    if(msg.content.startsWith(`${prefix}stop`)){
+      if(!voiceChannel) return msg.channel.send('Voce precisa entrar em um canal de voz antes')
+      voiceChannel.leave();
+      const quote = demyxQuotes.musicStopQuotes[Math.floor(Math.random() * demyxQuotes.musicPlayQuotes.length)]
+      return msg.channel.send(quote);
+    }
   }
   if(msg.content === prefix+'dance'){//comando de dance
     const msgAttachment = new Discord.MessageAttachment('https://i.imgur.com/w3duR07.png');
-    msg.reply('Dance water! Dance', msgAttachment);
+    msg.reply('Dance water! Dance!', msgAttachment);
 
   }
-  if(msg.content=== prefix+'comandos'){//lista comandos
-    msg.reply('Os comandos disponiveis são: !oi; !comandos;');
-  }
-  if(msg.content === prefix+'avatar'){//mostra imagem do avatar
-    msg.reply(msg.author.displayAvatarURL());
-  }
-  if(msg.content ===(prefix+'play')){//toca musica
-    if (msg.member.voice.channel) {
-      const connection = await msg.member.voice.channel.join();
-      // const streamOptions = { seek: 0, volume: 1 };
-      // const stream = ytdl('https://www.youtube.com/watch?v=dQw4w9WgXcQ', { filter: 'audioonly' })
-      // connection.play('http://www.sample-videos.com/audio/mp3/wave.mp3');
-    } else {
-      msg.reply('Voce precisa entrar em um canal antes!');
-    }
-  }
+  
 })
