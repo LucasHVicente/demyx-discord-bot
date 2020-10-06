@@ -4,3 +4,8 @@ Bot de discord voltado para musica construido usando Javascript e a biblioteca d
 !play : recebe um link do youtube e começa a tocar o audio do video no canal de voz, e se ja estiver tocando adiciona uma musica para o final da fila de reprodução. <br>
 !skip : pula para a proxima musica da lista. <br>
 !stop : desconecta o bot do servidor e limpa a lista de reprodução. <br>
+!now : mostra a musica tocando no momento. <br>
+!queue : mostra fila de reprodução.<br>
+!pause : pausa a musica atual.<br>
+!resume : retoma a musica pausada.<br>
+!loop : coloca a playlist em loop. <br>
