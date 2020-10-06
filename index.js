@@ -60,56 +60,30 @@ bot.on('message',async msg=>{
     if(!permissions.has('CONNECT')) return msg.channel.send("Hey! I don't have permission to connect to the voice channel!")
     if(!permissions.has('SPEAK')) return msg.channel.send("Hey! I don't have permission to speak in the channel!")
 
-    try {
-      var video = await youtube.getVideoByID(url)
-    } catch {
-      try {
-        var videos = await youtube.searchVideos(searchString, 1);
-        var video = await youtube.getVideoByID(videos[0].id);
-
-      } catch  {
-        return msg.channel.send("I couldn't find any search results")
+    if(url.match(/https:\/\/(www.youtube.com|youtube.com)\/playlist(.*)$/)){
+      const playlist = await youtube.getPlaylist(url);
+      const videos = await playlist.getVideos();
+      for(const video of Object.values(videos)){
+        const video2 = await youtube.getVideoByID(video.id)
+        await handleVideo(video2, msg, voiceChannel, true )
       }
-    }
+      msg.channel.send(`playlist __**${playlist.title}**__ has been added to the`)
+      return undefined
 
-    
-    const song = {
-      id: video.id,
-      title: Util.escapeMarkdown(video.title),
-      url:`https://www.youtube.com/watch?v=${video.id}`
-    }
-
-    if(!serverQueue){
-      const queueConstuct = {
-        textChannel: msg.channel,
-        voiceChannel: voiceChannel,
-        connection: null,
-        songs: [],
-        volume: 5,
-        playing: true
-      }
-      queue.set(msg.guild.id, queueConstuct)
-
-      queueConstuct.songs.push(song);
-      try {
-        const connection = await voiceChannel.join();
-        queueConstuct.connection = connection;
-        
-        play(msg.guild, queueConstuct.songs[0]);
-        
-        
-      } catch (error) {
-        console.log(error);
-        queue.delete(msg.guild.id)
-        return msg.channel.send('There was an error while joining the voice channel:', error);
-      }
     }else{
-      serverQueue.songs.push(song)
-      const quote = demyxQuotes.musicPlayQuotes[Math.floor(Math.random() * demyxQuotes.musicPlayQuotes.length)]
-        
-      return msg.channel.send(`${quote} ${song.title} has been added to the queue!`)
+      try {
+        var video = await youtube.getVideoByID(url)
+      } catch {
+        try {
+          var videos = await youtube.searchVideos(searchString, 1);
+          var video = await youtube.getVideoByID(videos[0].id);
+  
+        } catch  {
+          return msg.channel.send("I couldn't find any search results")
+        }
+      }
     }
-    return undefined;
+    return handleVideo(video, msg, voiceChannel)
 
   }else {
     if(msg.content.startsWith(`${prefix}stop`)){
@@ -174,7 +148,51 @@ ${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\
       return undefined
     }
   }
+  return undefined
 })
+async function handleVideo(video, msg, voiceChannel, playlist =false) {
+  const serverQueue = queue.get(msg.guild.id);
+
+  const song = {
+    id: video.id,
+    title: Util.escapeMarkdown(video.title),
+    url:`https://www.youtube.com/watch?v=${video.id}`
+  }
+
+  if(!serverQueue){
+    const queueConstuct = {
+      textChannel: msg.channel,
+      voiceChannel: voiceChannel,
+      connection: null,
+      songs: [],
+      volume: 5,
+      playing: true
+    }
+    queue.set(msg.guild.id, queueConstuct)
+
+    queueConstuct.songs.push(song);
+    try {
+      const connection = await voiceChannel.join();
+      queueConstuct.connection = connection;
+      
+      play(msg.guild, queueConstuct.songs[0]);
+      
+      
+    } catch (error) {
+      console.log(error);
+      queue.delete(msg.guild.id)
+      return msg.channel.send('There was an error while joining the voice channel:', error);
+    }
+  }else{
+    serverQueue.songs.push(song)
+    if(playlist) return undefined
+
+    const quote = demyxQuotes.musicPlayQuotes[Math.floor(Math.random() * demyxQuotes.musicPlayQuotes.length)]
+      
+    return msg.channel.send(`${quote} ${song.title} has been added to the queue!`)
+  }
+ return undefined
+}
 
 function play(guild, song){
   const serverQueue = queue.get(guild.id);
