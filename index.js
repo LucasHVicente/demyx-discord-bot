@@ -75,8 +75,25 @@ bot.on('message',async msg=>{
         var video = await youtube.getVideoByID(url)
       } catch {
         try {
-          var videos = await youtube.searchVideos(searchString, 1);
-          var video = await youtube.getVideoByID(videos[0].id);
+          var videos = await youtube.searchVideos(searchString, 10);
+          var index = 0 ;
+          msg.channel.send(`
+__**Select a Song:**__
+${videos.map(video2 => `**${++index} -** ${video2.title}`).join('\n')}
+Select one song between 1 and 10
+          `)
+          try {
+            var response = await msg.channel.awaitMessages(msg=>msg.content> 0 && msg.content <11, {
+              max: 1,
+              time: 30000,
+              errors: ['time']
+            })
+          } catch (error) {
+            msg.channel.send('No or invalid song selection was provided, please select a valid one')
+          }
+          const videoIndex = parseInt(response.first().content)
+
+          var video = await youtube.getVideoByID(videos[videoIndex -1].id);
   
         } catch  {
           return msg.channel.send("I couldn't find any search results")
@@ -150,6 +167,7 @@ ${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\
   }
   return undefined
 })
+
 async function handleVideo(video, msg, voiceChannel, playlist =false) {
   const serverQueue = queue.get(msg.guild.id);
 
