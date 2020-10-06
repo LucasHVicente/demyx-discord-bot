@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const { Util } = require('discord.js');
 const ytdl = require('ytdl-core');
 const demyxQuotes = 
   {
@@ -38,7 +39,7 @@ bot.on('guildMemberAdd', membro=>{
 })
 
 
-bot.on('message',async msg=>{//comandos de mensagens
+bot.on('message',async msg=>{
 
   if(msg.author.bot) return;
   if(!msg.content.startsWith(prefix)) return;
@@ -56,7 +57,7 @@ bot.on('message',async msg=>{//comandos de mensagens
 
     const songInfo = await ytdl.getInfo(args[1])
     const song = {
-      title: songInfo.videoDetails.title,
+      title: Util.escapeMarkdown(songInfo.videoDetails.title),
       url: songInfo.videoDetails.video_url
     }
 
@@ -114,6 +115,47 @@ bot.on('message',async msg=>{//comandos de mensagens
       serverQueue.connection.dispatcher.end()
       msg.channel.send("Okay then, let's skip to the next one.");
       return undefined;
+    }else if(msg.content.startsWith(`${prefix}volume`)){
+      if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first')
+      if(!serverQueue) return msg.channel.send('There is nothing playing')
+      if(!args[1]) return msg.channel.send(`The volume is : **${serverQueue.volume}**`)
+      if(isNaN(args[1])) return msg.channel.send(`That is not a valid volume`)
+
+      serverQueue.volume = args[1];
+      serverQueue.connection.dispatcher.setVolumeLogarithmic(args[1]/5)
+      msg.channel.send(`I have changed the volume to: **${args[1]}**`)
+
+      return undefined;
+    }else if(msg.content.startsWith(`${prefix}now`)){
+      if(!serverQueue) return msg.channel.send('There is nothing playing')
+      msg.channel.send(`Now playing: __**${serverQueue.songs[0].title}**__`);
+      return undefined;
+    }else if(msg.content.startsWith(`${prefix}queue`)){
+      if(!serverQueue) return msg.channel.send('There is nothing playing')
+      msg.channel.send(`
+__**Song Queue:**__
+${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\n')}
+**Now Playing: ** ${serverQueue.songs[0].title}
+      `, {split:true})
+      return undefined;
+    }else if(msg.content.startsWith(`${prefix}pause`)){
+      if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first')
+      if(!serverQueue) return msg.channel.send('There is nothing playing')
+      if(!serverQueue.playing) return msg.channel.send('The music is already paused')
+
+      serverQueue.playing = false;
+      serverQueue.connection.dispatcher.pause()
+      msg.channel.send("I have paused the music");
+      return undefined
+    }else if(msg.content.startsWith(`${prefix}resume`)){
+      if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first')
+      if(!serverQueue) return msg.channel.send('There is nothing playing')
+      if(serverQueue.playing) return msg.channel.send('The music is already playing')
+
+      serverQueue.playing = true;
+      serverQueue.connection.dispatcher.resume()
+      msg.channel.send("I have resumed the music");
+      return undefined
     }
   }
 })
@@ -136,4 +178,5 @@ function play(guild, song){
       console.log(err);
     })
     dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
+    serverQueue.textChannel.send(`Start playing: ${song.title}`)
 }
