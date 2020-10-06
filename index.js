@@ -1,6 +1,10 @@
 const Discord = require('discord.js');
 const { Util } = require('discord.js');
 const ytdl = require('ytdl-core');
+const YouTube = require('simple-youtube-api');
+
+const {	prefix,	token, google_api_key} = require('./config.json');
+
 const demyxQuotes = 
   {
     musicPlayQuotes : [
@@ -19,10 +23,10 @@ const demyxQuotes =
     ]
   }
 const bot = new Discord.Client();
-const {
-	prefix,
-	token,
-} = require('./config.json');
+
+const youtube = new YouTube(google_api_key);
+
+
 
 const queue = new Map()
 
@@ -45,7 +49,8 @@ bot.on('message',async msg=>{
   if(!msg.content.startsWith(prefix)) return;
   const voiceChannel = msg.member.voice.channel;
   const args = msg.content.substring(prefix.length).split(" ");
-
+  const searchString = args.slice(1).join(' ');
+  const url = args[1] ? args[1].replace(/<(._)>/g, '$1'): ''
   const serverQueue = queue.get(msg.guild.id)
 
   if(msg.content.startsWith(`${prefix}play`)){
@@ -55,10 +60,23 @@ bot.on('message',async msg=>{
     if(!permissions.has('CONNECT')) return msg.channel.send("Hey! I don't have permission to connect to the voice channel!")
     if(!permissions.has('SPEAK')) return msg.channel.send("Hey! I don't have permission to speak in the channel!")
 
-    const songInfo = await ytdl.getInfo(args[1])
+    try {
+      var video = await youtube.getVideoByID(url)
+    } catch {
+      try {
+        var videos = await youtube.searchVideos(searchString, 1);
+        var video = await youtube.getVideoByID(videos[0].id);
+
+      } catch  {
+        return msg.channel.send("I couldn't find any search results")
+      }
+    }
+
+    
     const song = {
-      title: Util.escapeMarkdown(songInfo.videoDetails.title),
-      url: songInfo.videoDetails.video_url
+      id: video.id,
+      title: Util.escapeMarkdown(video.title),
+      url:`https://www.youtube.com/watch?v=${video.id}`
     }
 
     if(!serverQueue){
@@ -75,8 +93,6 @@ bot.on('message',async msg=>{
       queueConstuct.songs.push(song);
       try {
         const connection = await voiceChannel.join();
-        const quote = demyxQuotes.musicPlayQuotes[Math.floor(Math.random() * demyxQuotes.musicPlayQuotes.length)]
-        msg.channel.send(quote+ ' ' + queueConstuct.songs[0].title);
         queueConstuct.connection = connection;
         
         play(msg.guild, queueConstuct.songs[0]);
@@ -178,5 +194,7 @@ function play(guild, song){
       console.log(err);
     })
     dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
-    serverQueue.textChannel.send(`Start playing: ${song.title}`)
+    const quote = demyxQuotes.musicPlayQuotes[Math.floor(Math.random() * demyxQuotes.musicPlayQuotes.length)]
+
+    serverQueue.textChannel.send(`${quote} __**${song.title}**__`)
 }
