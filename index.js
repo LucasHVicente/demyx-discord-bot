@@ -54,6 +54,7 @@ bot.on('message',async msg=>{
   const serverQueue = queue.get(msg.guild.id)
 
   if(msg.content.startsWith(`${prefix}play`)){
+    console.log(msg.content)
 
     if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.');
     const permissions = voiceChannel.permissionsFor(msg.client.user);
@@ -67,7 +68,7 @@ bot.on('message',async msg=>{
         const video2 = await youtube.getVideoByID(video.id)
         await handleVideo(video2, msg, voiceChannel, true )
       }
-      msg.channel.send(`playlist __**${playlist.title}**__ has been added to the.`)
+      msg.channel.send(`playlist __**${playlist.title}**__ has been added to the queue.`)
       return undefined
 
     }else{
@@ -104,6 +105,8 @@ Select one song between 1 and 10
 
   }else {
     if(msg.content.startsWith(`${prefix}stop`)){
+      console.log(msg.content)
+
       if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
 
@@ -116,6 +119,8 @@ Select one song between 1 and 10
       voiceChannel.leave();
 
     }else if(msg.content.startsWith(`${prefix}skip`)){
+      console.log(msg.content)
+
       if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
 
@@ -123,6 +128,8 @@ Select one song between 1 and 10
       msg.channel.send("Okay then, let's skip to the next one.");
       return undefined;
     }else if(msg.content.startsWith(`${prefix}volume`)){
+      console.log(msg.content)
+
       if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
       if(!args[1]) return msg.channel.send(`The volume is : **${serverQueue.volume}**`)
@@ -134,10 +141,14 @@ Select one song between 1 and 10
 
       return undefined;
     }else if(msg.content.startsWith(`${prefix}now`)){
+      console.log(msg.content)
+
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
       msg.channel.send(`Now playing: __**${serverQueue.songs[0].title}**__`);
       return undefined;
     }else if(msg.content.startsWith(`${prefix}queue`)){
+      console.log(msg.content)
+
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
       msg.channel.send(`
 __**Song Queue:**__
@@ -146,6 +157,8 @@ ${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\
       `, {split:true})
       return undefined;
     }else if(msg.content.startsWith(`${prefix}pause`)){
+      console.log(msg.content)
+
       if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
       if(!serverQueue.playing) return msg.channel.send('The music is already paused.')
@@ -155,6 +168,8 @@ ${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\
       msg.channel.send("I have paused the music.");
       return undefined
     }else if(msg.content.startsWith(`${prefix}resume`)){
+      console.log(msg.content)
+
       if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
       if(serverQueue.playing) return msg.channel.send('The music is already playing.')
@@ -164,6 +179,7 @@ ${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\
       msg.channel.send("I have resumed the music");
       return undefined
     }else if(msg.content.startsWith(`${prefix}loop`)){
+      console.log(msg.content)
       if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
       if(!serverQueue) return msg.channel.send('There is nothing playing.')
 
@@ -172,6 +188,7 @@ ${serverQueue.songs.map((song, index)=> `**${index+1}-** ${song.title}`).join('\
       return msg.channel.send(` ${serverQueue.loop? `Let's loop the playlist!`: `Okay, i'm just playing these once.`} `)
 
     }else if(msg.content.startsWith(`${prefix}help`)){
+      console.log(msg.content)
       return msg.channel.send(`
 __**Available commands:**__
 **!play:** Add songs to the playlist.
@@ -183,6 +200,12 @@ __**Available commands:**__
 **!resume:** Resume the current song.
 **!loop:** Loop the playlist.
       `)
+    }else if(msg.content.startsWith(`${prefix}random`)){
+      console.log(msg.content)
+      if(!voiceChannel) return msg.channel.send('You need to be in a voice channel first.')
+      if(!serverQueue) return msg.channel.send('There is nothing playing.')
+      serverQueue.songs.sort(() => Math.random() - 0.5)
+      msg.channel.send(`Queue randomized.`);
     }
   }
   return undefined
