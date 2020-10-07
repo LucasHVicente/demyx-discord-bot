@@ -9,3 +9,4 @@ Bot de discord voltado para musica construido usando Javascript e a biblioteca d
 !pause : pausa a musica atual.<br>
 !resume : retoma a musica pausada.<br>
 !loop : coloca a playlist em loop. <br>
+!random : randomiza a fila de reprodução.<br>
