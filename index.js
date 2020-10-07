@@ -199,6 +199,7 @@ __**Available commands:**__
 **!pause:** Pause the current song.
 **!resume:** Resume the current song.
 **!loop:** Loop the playlist.
+**!randomize:** Randomize the playlist.
       `)
     }else if(msg.content.startsWith(`${prefix}random`)){
       console.log(msg.content)
